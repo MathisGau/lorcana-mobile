@@ -8,7 +8,20 @@ import {
   View,
   FlatList,
   ImageBackground,
+  Image,
 } from "react-native";
+
+const setImage = {
+  1: require("../assets/Premier_Chapitre.png"),
+  2: require("../assets/L'ascension_des_Floodborn.png"),
+  3: require("../assets/Les_terres_d'encres.png"),
+  4: require("../assets/Le_retour_d'ursula.png"),
+  5: require("../assets/Ciel_Scintillant.png"),
+  6: require("../assets/La_mer_azurite.png"),
+  7: require("../assets/L'ile_d'Archazia.png"),
+  8: require("../assets/Le_Règne_de_Jafar.png"),
+  9: require("../assets/Menace_des_profondeurs.png"),
+};
 
 export default function App() {
   const [sets, setSets] = useState([]);
@@ -38,10 +51,9 @@ export default function App() {
       blurRadius={6}
     >
       <View style={styles.container}>
-        <Text style={styles.title}>Choisissez un Set</Text>
-
         <FlatList
           data={sets}
+          showsVerticalScrollIndicator={false}
           numColumns={1}
           keyExtractor={(set) => set.id.toString()}
           renderItem={({ item }) => (
@@ -50,6 +62,7 @@ export default function App() {
               style={styles.setElement}
               onPress={() => router.push(`/cardList?id=${item.id}`)}
             >
+              <Image source={setImage[item.id]} style={styles.setImage} />
               <Text style={styles.setText}>
                 {item.code} - {item.name}
               </Text>
@@ -73,25 +86,36 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 60,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    color: "#fff",
+    paddingTop: 110,
   },
   setElement: {
-    flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    padding: 15,
-    margin: 10,
-    borderRadius: 10,
+    flexDirection: "row",
     alignItems: "center",
+    width: 360,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    marginVertical: 8,
+    borderRadius: 15,
+    borderColor: "#FFD700",
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
+  setImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    resizeMode: "contain",
+    marginHorizontal: 6,
   },
   setText: {
+    flexWrap: "wrap",
+    maxWidth: "80%",
+    textAlign: "left",
     fontSize: 16,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#FFF",
+    paddingHorizontal: 6,
   },
 });

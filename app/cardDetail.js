@@ -2,10 +2,21 @@ import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Image } from "expo-image";
+import Separator from "../components/Separator";
+
+const rarityImages = {
+  Commune: require("../assets/Common.png"),
+  Inhabituelle: require("../assets/Uncommon.png"),
+  Rare: require("../assets/Rare.png"),
+  "Très Rare": require("../assets/Super_Rare.png"),
+  Légendaire: require("../assets/Legendary.png"),
+  Enchanter: require("../assets/Enchanted.png"),
+};
 
 export default function CardDetail() {
   const { id } = useLocalSearchParams();
   const [card, setCard] = useState(null);
+  const [setName, setSetName] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,6 +31,7 @@ export default function CardDetail() {
       .then((response) => response.json())
       .then((response) => {
         setCard(response.data);
+        console.log(response.data);
         setLoading(false);
       })
       .catch((error) => {
@@ -51,7 +63,7 @@ export default function CardDetail() {
         placeholder={require("../assets/back.png")}
         transition={{ type: "fade", duration: 800 }}
         style={styles.backgroundImage}
-        blurRadius={10}
+        blurRadius={8}
       />
 
       <View style={styles.cardContainer}>
@@ -65,10 +77,21 @@ export default function CardDetail() {
         />
       </View>
 
-      {/* Détails de la carte */}
       <View style={styles.cardInfo}>
-        <Text style={styles.cardName}>{card.name}</Text>
-        <Text style={styles.cardType}>{card.type}</Text>
+        <View style={styles.descriptionHeader}>
+          <Text style={styles.cardName} numberOfLines={2}>
+            {card.name}
+          </Text>
+          <View style={styles.rarityContainer}>
+            <Image
+              source={rarityImages[card.rarity]}
+              style={styles.rarityImage}
+            />
+            <Text style={styles.cardDetails}>{card.rarity}</Text>
+          </View>
+        </View>
+        <Text style={styles.cardDetails}>Histoire: {card.story}</Text>
+        <Separator />
         <Text style={styles.cardDescription}>{card.description}</Text>
       </View>
     </View>
@@ -92,38 +115,56 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
+    marginTop: 120,
   },
   cardImage: {
     width: 300,
     height: 400,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
+  },
+  descriptionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   cardInfo: {
-    alignItems: "center",
+    // alignItems: "center",
     padding: 20,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
-    borderRadius: 10,
-    marginHorizontal: 20,
+    borderRadius: 12,
+    width: "100%",
+    flexGrow: 1,
   },
   cardName: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#FFD700",
     marginBottom: 5,
+    maxWidth: "80%",
   },
-  cardType: {
-    fontSize: 18,
-    color: "#FFF",
+  rarityContainer: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
     marginBottom: 10,
   },
+  rarityImage: {
+    width: 32,
+    height: 32,
+    contentFit: "contain",
+  },
+  descriptionContainer: {
+    textAlign: "left",
+  },
   cardDescription: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#DDD",
-    textAlign: "center",
+    textAlign: "left",
+    marginVertical: 10,
+  },
+  cardDetails: {
+    fontSize: 16,
+    color: "white",
+    marginBottom: 5,
   },
   loadingContainer: {
     flex: 1,

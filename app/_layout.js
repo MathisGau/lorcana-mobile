@@ -1,6 +1,15 @@
 import { Stack } from "expo-router";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  Image,
+  Dimensions,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+
+const { height, width } = Dimensions.get("window");
 
 export default function RootLayout() {
   const router = useRouter();
@@ -9,26 +18,29 @@ export default function RootLayout() {
     <Stack
       screenOptions={{
         headerTransparent: true,
-        headerTitle: "",
+        headerTitle: () => (
+          <View style={styles.headerContainer}>
+            <Image
+              source={require("../assets/lorcana-logo.png")}
+              style={styles.logo}
+            />
+          </View>
+        ),
         headerStyle: {
-          backgroundColor: "transparent",
+          backgroundColor: "rgba(0, 0, 0, 0)",
           elevation: 0,
           shadowOpacity: 0,
         },
-        headerLeft: ({ canGoBack }) => {
-          if (canGoBack) {
-            return (
-              <TouchableOpacity
-                style={styles.GoBackContainer}
-                onPress={() => router.back()}
-              >
-                <Text style={styles.GoBackButtun}>Retour</Text>
-              </TouchableOpacity>
-            );
-          } else {
-            return null;
-          }
-        },
+        headerLeft: ({ canGoBack }) =>
+          canGoBack ? (
+            <TouchableOpacity
+              style={styles.GoBackContainer}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+          ) : null,
+        headerTitleAlign: "center",
       }}
     />
   );
@@ -43,13 +55,18 @@ const styles = StyleSheet.create({
   },
   GoBackContainer: {
     padding: 6,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderColor: "yellow",
-    borderWidth: 1,
     borderRadius: 10,
   },
-  GoBackButtun: {
-    color: "yellow",
-    fontSize: "18",
+  headerContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    height: "100%",
+  },
+  logo: {
+    height: height * 0.18,
+    aspectRatio: 2,
+    resizeMode: "contain",
   },
 });
