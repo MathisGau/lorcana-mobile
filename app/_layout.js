@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const { height, width } = Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
 export default function RootLayout() {
   const router = useRouter();
@@ -39,10 +39,14 @@ export default function RootLayout() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-          ) : null,
+          ) : (
+            <View style={styles.emptySpace} />
+          ),
         headerTitleAlign: "center",
       }}
-    />
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
   );
 }
 
@@ -54,8 +58,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   GoBackContainer: {
-    padding: 6,
     borderRadius: 10,
+  },
+  emptySpace: {
+    width: 40,
   },
   headerContainer: {
     flex: 1,
@@ -65,7 +71,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   logo: {
-    height: height * 0.18,
+    height: height * 0.2,
     aspectRatio: 2,
     resizeMode: "contain",
   },
