@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import Separator from "../components/Separator";
+import WishlistButton from "../components/WishlistButton";
+import CollectionButton from "../components/CollectionButton";
 
 const rarityImages = {
   Commune: require("../assets/Common.png"),
@@ -16,10 +18,10 @@ const rarityImages = {
 export default function CardDetail() {
   const { id } = useLocalSearchParams();
   const [card, setCard] = useState(null);
-  const [setName, setSetName] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchCardDetails = () => {
+    setLoading(true);
     fetch(`https://lorcana.brybry.fr/api/cards/${id}`, {
       method: "GET",
       headers: {
@@ -31,13 +33,16 @@ export default function CardDetail() {
       .then((response) => response.json())
       .then((response) => {
         setCard(response.data);
-        console.log(response.data);
         setLoading(false);
       })
       .catch((error) => {
         console.error("Error:", error);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchCardDetails();
   }, [id]);
 
   if (loading) {
@@ -58,6 +63,18 @@ export default function CardDetail() {
 
   return (
     <View style={styles.container}>
+      <WishlistButton
+        cardId={card.id}
+        isInWishlist={card.is_in_wishlist}
+        onUpdate={fetchCardDetails}
+      />
+
+      <CollectionButton
+        cardId={card.id}
+        normalQty={card.normal_quantity}
+        foilQty={card.foil_quantity}
+        onUpdate={fetchCardDetails}
+      />
       <Image
         source={{ uri: card.image }}
         placeholder={require("../assets/back.png")}
@@ -126,7 +143,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   cardInfo: {
-    // alignItems: "center",
     padding: 20,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     borderRadius: 12,
@@ -151,9 +167,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     contentFit: "contain",
-  },
-  descriptionContainer: {
-    textAlign: "left",
   },
   cardDescription: {
     fontSize: 16,
