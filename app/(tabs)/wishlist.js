@@ -8,50 +8,43 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import {
-  getCollection,
-  removeCardFromCollection,
   collectionEvents,
+  getWishlist,
+  removeCardFromWishlist,
 } from "../../utils/storageServices";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function Collection() {
-  const [collection, setCollection] = useState([]);
+export default function Wishlist() {
+  const [wishlist, setWishlist] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    loadCollection();
+    loadWishlist();
   }, []);
 
-  const loadCollection = async () => {
-    const storedCollection = await getCollection();
-    console.log("📦 Collection récupérée :", storedCollection);
-
-    if (storedCollection && storedCollection.length > 0) {
-      const validCollection = storedCollection.filter(
-        (card) => card && card.id
-      );
-      setCollection(validCollection);
+  const loadWishlist = async () => {
+    const storedWishlist = await getWishlist();
+    if (storedWishlist) {
+      const validWishlist = storedWishlist.filter((card) => card && card.id);
+      setWishlist(validWishlist);
     } else {
-      console.warn("Aucune carte trouvée dans AsyncStorage.");
-      setCollection([]);
+      setWishlist([]);
     }
   };
 
   const handleRemoveCard = async (cardId) => {
-    const updatedCollection = await removeCardFromCollection(cardId);
-    setCollection(updatedCollection);
+    await removeCardFromWishlist(cardId);
+    loadWishlist();
   };
 
   return (
     <View style={styles.container}>
-      {collection.length === 0 ? (
-        <Text style={styles.emptyText}>
-          Aucune carte dans votre collection.
-        </Text>
+      {wishlist.length === 0 ? (
+        <Text style={styles.emptyText}>Aucune carte dans votre wishlist.</Text>
       ) : (
         <FlatList
-          data={collection}
+          data={wishlist}
           numColumns={2}
           keyExtractor={(card) => card.id.toString()}
           renderItem={({ item }) =>
@@ -102,7 +95,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyText: {
-    paddingTop: 300,
     color: "#DDD",
     fontSize: 16,
     marginTop: 20,

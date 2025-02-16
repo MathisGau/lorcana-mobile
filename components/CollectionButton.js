@@ -1,28 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { updateCardCollection } from "../utils/cardServices";
+import {
+  addCardToCollection,
+  removeCardFromCollection,
+  isCardInCollection,
+} from "../utils/storageServices";
 
-export default function CollectionButton({
-  cardId,
-  normalQty,
-  foilQty,
-  onUpdate,
-}) {
+export default function CollectionButton({ card }) {
+  const [isInCollection, setIsInCollection] = useState(false);
   const [loading, setLoading] = useState(false);
-  const isInCollection = normalQty > 0 || foilQty > 0;
+
+  useEffect(() => {
+    if (card && card.id) {
+      checkCollectionStatus();
+    }
+  }, [card]);
+
+  const checkCollectionStatus = async () => {
+    if (!card || !card.id) return;
+    console.log(`Vérification de la carte ID: ${card.id}`);
+    const exists = await isCardInCollection(card.id);
+    setIsInCollection(exists);
+  };
 
   const handleCollectionToggle = async () => {
-    if (loading) return;
+    if (loading || !card || !card.id) {
+      return;
+    }
+
     setLoading(true);
 
     if (isInCollection) {
-      await updateCardCollection(cardId, 0, 0);
+      await removeCardFromCollection(card.id);
     } else {
-      await updateCardCollection(cardId, 1, 0);
+      console.log(`Ajout de la carte ID: ${card.id}`);
+      await addCardToCollection(card);
     }
 
-    onUpdate();
+    await checkCollectionStatus();
     setLoading(false);
   };
 
@@ -30,6 +46,7 @@ export default function CollectionButton({
     <TouchableOpacity
       style={styles.iconContainer}
       onPress={handleCollectionToggle}
+      disabled={loading}
     >
       <Ionicons
         name={isInCollection ? "bookmarks" : "bookmarks-outline"}

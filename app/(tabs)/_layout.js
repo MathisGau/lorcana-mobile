@@ -43,6 +43,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="wishlist"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="account"
         options={{
           tabBarIcon: ({ color, size }) => (

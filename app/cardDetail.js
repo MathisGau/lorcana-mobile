@@ -16,33 +16,48 @@ const rarityImages = {
 };
 
 export default function CardDetail() {
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const id = Number(params.id);
+
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchCardDetails = () => {
-    setLoading(true);
-    fetch(`https://lorcana.brybry.fr/api/cards/${id}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization:
-          "Bearer 48|ji1UEy4Z28kqsw47UyS7HXEIxi2tPQ0mUg7EF7jp36a42e80",
-      },
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        setCard(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        setLoading(false);
-      });
+  const fetchCardDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `https://lorcana.brybry.fr/api/cards/${id}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization:
+              "Bearer 48|ji1UEy4Z28kqsw47UyS7HXEIxi2tPQ0mUg7EF7jp36a42e80",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data && data.data) {
+        setCard(data.data);
+      } else {
+        setCard(null);
+      }
+    } catch (error) {
+      console.error("Erreur de récupération des détails de la carte :", error);
+      setCard(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchCardDetails();
+    if (!isNaN(id)) {
+      fetchCardDetails();
+    } else {
+      console.error("ID invalide:", id);
+    }
   }, [id]);
 
   if (loading) {
@@ -53,7 +68,7 @@ export default function CardDetail() {
     );
   }
 
-  if (!card) {
+  if (!card || !card.id) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.errorText}>Carte introuvable</Text>
@@ -63,18 +78,9 @@ export default function CardDetail() {
 
   return (
     <View style={styles.container}>
-      <WishlistButton
-        cardId={card.id}
-        isInWishlist={card.is_in_wishlist}
-        onUpdate={fetchCardDetails}
-      />
+      <WishlistButton card={card} />
+      <CollectionButton card={card} />
 
-      <CollectionButton
-        cardId={card.id}
-        normalQty={card.normal_quantity}
-        foilQty={card.foil_quantity}
-        onUpdate={fetchCardDetails}
-      />
       <Image
         source={{ uri: card.image }}
         placeholder={require("../assets/back.png")}
