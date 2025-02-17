@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Image } from "expo-image";
 import SearchBarre from "../components/SearchBarre";
 import Card from "../components/Card";
+import { fetchCards } from "../utils/APIServices";
 
 export default function CardList() {
   const [cards, setCards] = useState([]);
@@ -12,21 +13,12 @@ export default function CardList() {
   const { id } = useLocalSearchParams();
 
   useEffect(() => {
-    fetch(`https://lorcana.brybry.fr/api/sets/${id}/cards`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization:
-          "Bearer 48|ji1UEy4Z28kqsw47UyS7HXEIxi2tPQ0mUg7EF7jp36a42e80",
-      },
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        setCards(response.data);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+    const getCards = async () => {
+      const data = await fetchCards(id);
+      setCards(data);
+    };
+
+    getCards();
   }, [id]);
 
   const filteredCards = cards.filter((card) =>

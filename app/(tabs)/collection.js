@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000",
     alignItems: "center",
-    paddingTop: 100,
+    justifyContent: "center",
   },
   background: {
     position: "absolute",
@@ -101,7 +101,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyText: {
-    paddingTop: 300,
     color: "#DDD",
     fontSize: 16,
     marginTop: 20,

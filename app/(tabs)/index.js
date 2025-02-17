@@ -1,4 +1,4 @@
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
@@ -10,6 +10,7 @@ import {
   ImageBackground,
   Image,
 } from "react-native";
+import { fetchSets } from "../../utils/APIServices";
 
 const setImage = {
   1: require("../../assets/Premier_Chapitre.png"),
@@ -27,21 +28,12 @@ export default function App() {
   const [sets, setSets] = useState([]);
 
   useEffect(() => {
-    fetch("https://lorcana.brybry.fr/api/sets", {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization:
-          "Bearer 48|ji1UEy4Z28kqsw47UyS7HXEIxi2tPQ0mUg7EF7jp36a42e80",
-      },
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        setSets(response.data);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+    const getSets = async () => {
+      const data = await fetchSets();
+      setSets(data);
+    };
+
+    getSets();
   }, []);
 
   return (

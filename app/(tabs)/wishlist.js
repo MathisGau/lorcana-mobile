@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000",
     alignItems: "center",
-    paddingTop: 100,
+    justifyContent: "center",
   },
   background: {
     position: "absolute",

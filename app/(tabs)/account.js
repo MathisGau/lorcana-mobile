@@ -1,52 +1,35 @@
-import { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from "react-native";
-import { getAuthToken, logout } from "../../utils/authServices";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, StyleSheet, Button, TouchableOpacity } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { getAccountServices } from "../../utils/authServices";
 
 export default function AccountScreen() {
-  const [userInfo, setUserInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [account, setAccount] = useState(null);
 
-  useEffect(() => {
-    fetchUserInfo();
+  const handleAccount = useCallback(async () => {
+    const response = await getAccountServices();
+    if (response) {
+      setAccount(response);
+    }
   }, []);
 
-  // 🔹 Récupère les informations de l'utilisateur
-  const fetchUserInfo = async () => {
-    setLoading(true);
-    const token = await getAuthToken();
-    if (token) {
-      setUserInfo({ email: "exemple@user.com" }); // Placeholder (adapter si un endpoint existe)
-    }
-    setLoading(false);
-  };
+  const handleLogout = useCallback(() => {
+    AsyncStorage.removeItem("userToken");
+    router.replace("/login");
+  }, []);
 
-  // 🔹 Déconnexion de l'utilisateur
-  const handleLogout = async () => {
-    await logout();
-    // Rediriger vers la page de connexion si nécessaire
-  };
+  useEffect(() => {
+    handleAccount();
+  }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mon Compte</Text>
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#FFD700" />
-      ) : (
-        <>
-          <Text style={styles.userInfo}>Email : {userInfo?.email}</Text>
-
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Se Déconnecter</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      <Text style={styles.text}>{account?.name}</Text>
+      <Text style={styles.text}>{account?.email}</Text>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Se déconnecter</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -55,16 +38,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 100,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFD700",
-    marginBottom: 20,
-  },
-  userInfo: {
+  text: {
     fontSize: 16,
     color: "#FFF",
     marginBottom: 20,

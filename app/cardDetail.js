@@ -5,6 +5,7 @@ import { Image } from "expo-image";
 import Separator from "../components/Separator";
 import WishlistButton from "../components/WishlistButton";
 import CollectionButton from "../components/CollectionButton";
+import { fetchCardDetails } from "../utils/APIServices";
 
 const rarityImages = {
   Commune: require("../assets/Common.png"),
@@ -22,42 +23,25 @@ export default function CardDetail() {
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchCardDetails = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `https://lorcana.brybry.fr/api/cards/${id}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization:
-              "Bearer 48|ji1UEy4Z28kqsw47UyS7HXEIxi2tPQ0mUg7EF7jp36a42e80",
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (data && data.data) {
-        setCard(data.data);
-      } else {
-        setCard(null);
-      }
-    } catch (error) {
-      console.error("Erreur de récupération des détails de la carte :", error);
-      setCard(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (!isNaN(id)) {
-      fetchCardDetails();
-    } else {
-      console.error("ID invalide:", id);
-    }
+    const fetchData = async () => {
+      if (isNaN(id)) {
+        console.error("ID invalide:", id);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const data = await fetchCardDetails(id);
+        setCard(data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération de la carte:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [id]);
 
   if (loading) {
