@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -6,25 +6,19 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { loginServices } from "../utils/authServices";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-  const handleLogin = async () => {
-    const storedEmail = await AsyncStorage.getItem("userEmail");
-    const storedPassword = await AsyncStorage.getItem("userPassword");
-
-    if (email === storedEmail && password === storedPassword) {
-      await AsyncStorage.setItem("isLoggedIn", "true");
-      router.push("/account");
-    } else {
-      setError("Email ou mot de passe incorrect");
+  const handleLogin = useCallback(async (email, password) => {
+    const response = await loginServices(email, password);
+    if (response) {
+      router.replace("/(tabs)/collection");
     }
-  };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -42,11 +36,13 @@ export default function LoginScreen() {
         onChangeText={setPassword}
         value={password}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => handleLogin(email, password)}
+      >
         <Text style={styles.buttonText}>Se connecter</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push("/signup")}>
+      <TouchableOpacity onPress={() => router.push("/register")}>
         <Text style={styles.link}>Créer un compte</Text>
       </TouchableOpacity>
     </View>
@@ -82,10 +78,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#000",
     fontWeight: "bold",
-  },
-  error: {
-    color: "red",
-    marginBottom: 10,
   },
   link: {
     color: "#FFD700",

@@ -1,10 +1,24 @@
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { height } = Dimensions.get("window");
 
 export default function TabsLayout() {
+  useEffect(() => {
+    const checkUserToken = async () => {
+      const userToken = await AsyncStorage.getItem("userToken");
+
+      if (!userToken) {
+        router.replace("../login");
+      }
+    };
+
+    checkUserToken();
+  }, []);
+
   return (
     <Tabs
       screenOptions={{

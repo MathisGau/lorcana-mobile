@@ -19,7 +19,6 @@ export default function CollectionButton({ card }) {
 
   const checkCollectionStatus = async () => {
     if (!card || !card.id) return;
-    console.log(`Vérification de la carte ID: ${card.id}`);
     const exists = await isCardInCollection(card.id);
     setIsInCollection(exists);
   };
@@ -34,7 +33,6 @@ export default function CollectionButton({ card }) {
     if (isInCollection) {
       await removeCardFromCollection(card.id);
     } else {
-      console.log(`Ajout de la carte ID: ${card.id}`);
       await addCardToCollection(card);
     }
 

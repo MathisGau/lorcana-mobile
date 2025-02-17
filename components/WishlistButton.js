@@ -19,7 +19,6 @@ export default function WishlistButton({ card }) {
 
   const checkWishlistStatus = async () => {
     if (!card || !card.id) return;
-    console.log(`Vérification de la wishlist ID: ${card.id}`);
     const exists = await isCardInWishlist(card.id);
     setIsInWishlist(exists);
   };
@@ -29,10 +28,8 @@ export default function WishlistButton({ card }) {
     setLoading(true);
 
     if (isInWishlist) {
-      console.log(`Suppression de la carte ID: ${card.id} de la wishlist`);
       await removeCardFromWishlist(card.id);
     } else {
-      console.log(`Ajout de la carte ID: ${card.id} à la wishlist`);
       await addCardToWishlist(card);
     }
 

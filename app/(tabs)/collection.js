@@ -25,7 +25,6 @@ export default function Collection() {
 
   const loadCollection = async () => {
     const storedCollection = await getCollection();
-    console.log("📦 Collection récupérée :", storedCollection);
 
     if (storedCollection && storedCollection.length > 0) {
       const validCollection = storedCollection.filter(
