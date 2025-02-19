@@ -1,35 +1,54 @@
-import { router } from "expo-router";
-import {
-  FlatList,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-} from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, router } from "expo-router";
+import { FlatList, View, StyleSheet, TouchableOpacity } from "react-native";
+import { useCallback, useEffect, useState } from "react";
 import { Image } from "expo-image";
 import SearchBarre from "../components/SearchBarre";
 import Card from "../components/Card";
+import {
+  getCollectionCardIds,
+  getWishlistCardIds,
+} from "../utils/storageServices";
 import { fetchCards } from "../utils/APIServices";
 import { Ionicons } from "@expo/vector-icons";
-import { Modal } from "react-native";
+import FilterModal from "../components/FilterModal";
 
 export default function CardList() {
+  const { id } = useLocalSearchParams();
   const [cards, setCards] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [sortOption, setSortOption] = useState("id");
+  const [filterOption, setFilterOption] = useState("all");
   const [modalVisible, setModalVisible] = useState(false);
-  const { id } = useLocalSearchParams();
+  const [collectionIds, setCollectionIds] = useState([]);
+  const [wishlistIds, setWishlistIds] = useState([]);
 
-  useEffect(() => {
-    const getCards = async () => {
+  const getCards = useCallback(async () => {
+    if (!id) return;
+    try {
       const data = await fetchCards(id);
       setCards(data);
-    };
-
-    getCards();
+    } catch (error) {
+      console.error("Erreur lors de la récupération des cartes :", error);
+    }
   }, [id]);
+
+  const getFilters = useCallback(async () => {
+    try {
+      const collected = await getCollectionCardIds();
+      const wishlist = await getWishlistCardIds();
+      setCollectionIds(collected);
+      setWishlistIds(wishlist);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des filtres :", error);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      getCards();
+      getFilters();
+    }, [getCards, getFilters])
+  );
 
   const sortedCards = [...cards].sort((a, b) => {
     if (sortOption === "id") return a.id - b.id;
@@ -38,9 +57,20 @@ export default function CardList() {
     return 0;
   });
 
-  const filteredCards = sortedCards.filter((card) =>
-    card.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredCards = sortedCards.filter((card) => {
+    const matchesSearch = card.name
+      .toLowerCase()
+      .includes(searchText.toLowerCase());
+
+    if (filterOption === "collection")
+      return matchesSearch && collectionIds.includes(card.id);
+    if (filterOption === "wishlist")
+      return matchesSearch && wishlistIds.includes(card.id);
+    if (filterOption !== "all")
+      return matchesSearch && card.rarity === filterOption;
+
+    return matchesSearch;
+  });
 
   return (
     <View style={styles.container}>
@@ -49,65 +79,24 @@ export default function CardList() {
         style={styles.background}
         blurRadius={3}
       />
-      {/* <View style={styles.searchContainer}> */}
-      <SearchBarre
-        searchText={searchText}
-        setSearchText={setSearchText}
-        style={styles.searchBar}
-      />
-      <TouchableOpacity
-        style={styles.filterButton}
-        onPress={() => setModalVisible(true)}
-      >
-        <Ionicons name="filter" size={28} color="#FFD700" />
-      </TouchableOpacity>
-      {/* </View> */}
+      <View style={styles.searchContainer}>
+        <SearchBarre searchText={searchText} setSearchText={setSearchText} />
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <Ionicons name="filter" size={28} color="#FFD700" />
+        </TouchableOpacity>
+      </View>
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Trier par :</Text>
-            <TouchableOpacity
-              style={styles.modalOptionButton}
-              onPress={() => {
-                setSortOption("id");
-                setModalVisible(false);
-              }}
-            >
-              <Text style={styles.modalOption}>Par Défaut</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalOptionButton}
-              onPress={() => {
-                setSortOption("name");
-                setModalVisible(false);
-              }}
-            >
-              <Text style={styles.modalOption}>Nom</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalOptionButton}
-              onPress={() => {
-                setSortOption("rarity");
-                setModalVisible(false);
-              }}
-            >
-              <Text style={styles.modalOption}>Rareté</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.modalClose}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <FilterModal
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+        filterOption={filterOption}
+        setFilterOption={setFilterOption}
+      />
 
       <FlatList
         data={filteredCards}
@@ -140,75 +129,16 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#333",
-  },
-  searchBar: {
-    flex: 1,
-    height: 40,
-    width: "100%",
-    borderRadius: 20,
-    backgroundColor: "#222",
-    paddingHorizontal: 0,
-    color: "#FFF",
-    fontSize: 16,
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
   },
   filterButton: {
     padding: 10,
     position: "absolute",
-    top: 107,
-    right: 30,
+    top: -5,
+    right: 20,
   },
   listContainer: {
     paddingVertical: 0,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-  },
-  modalContent: {
-    backgroundColor: "#333",
-    padding: 25,
-    borderRadius: 15,
-    width: "80%",
-    alignItems: "center",
-    elevation: 10,
-    shadowColor: "#FFD700",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#FFD700",
-    marginBottom: 15,
-  },
-  modalOptionButton: {
-    backgroundColor: "#444",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginBottom: 10,
-    width: "100%",
-    alignItems: "center",
-  },
-  modalOption: {
-    fontSize: 18,
-    color: "#FFF",
-  },
-  closeButton: {
-    marginTop: 10,
-    backgroundColor: "red",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  modalClose: {
-    fontSize: 18,
-    color: "#FFF",
-    fontWeight: "bold",
   },
 });

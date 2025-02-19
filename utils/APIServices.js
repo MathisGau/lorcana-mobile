@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE_URL = "https://lorcana.brybry.fr/api";

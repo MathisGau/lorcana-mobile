@@ -16,17 +16,32 @@ import {
 } from "../../utils/storageServices";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import SearchBarre from "../../components/SearchBarre";
 
 export default function Collection() {
   const [collection, setCollection] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [searchText, setSearchText] = useState("");
+  const [filteredCollection, setFilteredCollection] = useState([]);
 
   useFocusEffect(
     useCallback(() => {
       loadCollection();
     }, [])
   );
+
+  useEffect(() => {
+    if (searchText.trim() === "") {
+      setFilteredCollection(collection); // Si la recherche est vide, afficher tout
+    } else {
+      setFilteredCollection(
+        collection.filter((card) =>
+          card.name.toLowerCase().includes(searchText.toLowerCase())
+        )
+      );
+    }
+  }, [searchText, collection]); // Met à jour chaque fois que la collection change ou que l'utilisateur tape dans la barre de recherche
 
   const loadCollection = async () => {
     setLoading(true);
@@ -66,35 +81,37 @@ export default function Collection() {
             Aucune carte dans votre collection.
           </Text>
         ) : (
-          <FlatList
-            data={collection}
-            numColumns={2}
-            keyExtractor={(card) =>
-              card?.id ? card.id.toString() : Math.random().toString()
-            }
-            renderItem={({ item }) =>
-              item ? (
-                <View style={styles.cardWrapper}>
-                  <TouchableOpacity
-                    style={styles.cardContainer}
-                    onPress={() => router.push(`/cardDetail?id=${item.id}`)}
-                  >
-                    <Image
-                      style={styles.cardImage}
-                      source={{ uri: item.image }}
-                    />
-                    <Text style={styles.cardName}>{item.name}</Text>
-                  </TouchableOpacity>
-                  {/* <TouchableOpacity
+          <>
+            <FlatList
+              data={filteredCollection}
+              numColumns={2}
+              keyExtractor={(card) =>
+                card?.id ? card.id.toString() : Math.random().toString()
+              }
+              renderItem={({ item }) =>
+                item ? (
+                  <View style={styles.cardWrapper}>
+                    <TouchableOpacity
+                      style={styles.cardContainer}
+                      onPress={() => router.push(`/cardDetail?id=${item.id}`)}
+                    >
+                      <Image
+                        style={styles.cardImage}
+                        source={{ uri: item.image }}
+                      />
+                      <Text style={styles.cardName}>{item.name}</Text>
+                    </TouchableOpacity>
+                    {/* <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => handleRemoveCard(item.id)}
                   >
                     <Ionicons name="trash" size={24} color="red" />
                   </TouchableOpacity> */}
-                </View>
-              ) : null
-            }
-          />
+                  </View>
+                ) : null
+              }
+            />
+          </>
         )}
       </View>
     </ImageBackground>
