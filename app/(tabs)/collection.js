@@ -85,12 +85,12 @@ export default function Collection() {
                     />
                     <Text style={styles.cardName}>{item.name}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => handleRemoveCard(item.id)}
                   >
                     <Ionicons name="trash" size={24} color="red" />
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
               ) : null
             }
