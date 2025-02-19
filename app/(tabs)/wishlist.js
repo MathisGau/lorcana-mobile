@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,16 +13,18 @@ import {
   fetchCardDetails,
   toggleWishlistCard,
 } from "../../utils/storageServices";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function Wishlist() {
   const [wishlist, setWishlist] = useState([]);
   const router = useRouter();
 
-  useEffect(() => {
-    loadWishlist();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadWishlist();
+    }, [])
+  );
 
   const loadWishlist = async () => {
     const storedCardIds = await getWishlistCardIds();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   fetchCardDetails,
   removeCardFromCollection,
 } from "../../utils/storageServices";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function Collection() {
@@ -22,9 +22,11 @@ export default function Collection() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    loadCollection();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadCollection();
+    }, [])
+  );
 
   const loadCollection = async () => {
     setLoading(true);
