@@ -1,6 +1,12 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
 import { Image } from "expo-image";
 import Separator from "../components/Separator";
 import WishlistButton from "../components/WishlistButton";
@@ -62,8 +68,8 @@ export default function CardDetail() {
 
   return (
     <View style={styles.container}>
-      <WishlistButton card={card} />
-      <CollectionButton card={card} />
+      <WishlistButton cardId={card.id} />
+      <CollectionButton cardId={card.id} />
 
       <Image
         source={{ uri: card.image }}
@@ -99,7 +105,9 @@ export default function CardDetail() {
         </View>
         <Text style={styles.cardDetails}>Histoire: {card.story}</Text>
         <Separator />
-        <Text style={styles.cardDescription}>{card.description}</Text>
+        <ScrollView>
+          <Text style={styles.cardDescription}>{card.description}</Text>
+        </ScrollView>
       </View>
     </View>
   );

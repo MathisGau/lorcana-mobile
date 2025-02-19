@@ -1,49 +1,57 @@
-import { useState, useEffect } from "react";
 import { TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import {
-  addCardToCollection,
-  removeCardFromCollection,
   isCardInCollection,
+  toggleCollectionCard,
 } from "../utils/storageServices";
 
-export default function CollectionButton({ card }) {
+export default function CollectionButton({ cardId }) {
   const [isInCollection, setIsInCollection] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (card && card.id) {
-      checkCollectionStatus();
-    }
-  }, [card]);
-
-  const checkCollectionStatus = async () => {
-    if (!card || !card.id) return;
-    const exists = await isCardInCollection(card.id);
-    setIsInCollection(exists);
-  };
-
-  const handleCollectionToggle = async () => {
-    if (loading || !card || !card.id) {
+    if (!cardId || typeof cardId !== "number") {
+      console.error(
+        "❌ Erreur : cardId invalide dans CollectionButton",
+        cardId
+      );
       return;
     }
 
-    setLoading(true);
+    const checkCollection = async () => {
+      setLoading(true);
+      const inCollection = await isCardInCollection(cardId);
+      setIsInCollection(inCollection);
+      setLoading(false);
+    };
 
-    if (isInCollection) {
-      await removeCardFromCollection(card.id);
-    } else {
-      await addCardToCollection(card);
+    checkCollection();
+  }, [cardId]);
+
+  const handleToggleCollection = async () => {
+    if (loading) return;
+
+    setLoading(true);
+    const previousState = isInCollection;
+    setIsInCollection(!isInCollection);
+
+    const result = await toggleCollectionCard(cardId);
+    if (!result.success) {
+      setIsInCollection(previousState);
+      console.error(
+        "❌ Erreur lors de la mise à jour de la collection :",
+        result.message
+      );
     }
 
-    await checkCollectionStatus();
     setLoading(false);
   };
 
   return (
     <TouchableOpacity
       style={styles.iconContainer}
-      onPress={handleCollectionToggle}
+      onPress={handleToggleCollection}
       disabled={loading}
     >
       <Ionicons

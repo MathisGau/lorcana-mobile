@@ -1,47 +1,51 @@
-import { useState, useEffect } from "react";
 import { TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  addCardToWishlist,
-  removeCardFromWishlist,
-  isCardInWishlist,
-} from "../utils/storageServices";
+import { useEffect, useState } from "react";
+import { isCardInWishlist, toggleWishlistCard } from "../utils/storageServices";
 
-export default function WishlistButton({ card }) {
+export default function WishlistButton({ cardId }) {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (card && card.id) {
-      checkWishlistStatus();
+    if (!cardId || typeof cardId !== "number") {
+      console.error("❌ Erreur : cardId invalide dans WishlistButton", cardId);
+      return;
     }
-  }, [card]);
 
-  const checkWishlistStatus = async () => {
-    if (!card || !card.id) return;
-    const exists = await isCardInWishlist(card.id);
-    setIsInWishlist(exists);
-  };
+    const checkWishlist = async () => {
+      setLoading(true);
+      const inWishlist = await isCardInWishlist(cardId);
+      setIsInWishlist(inWishlist);
+      setLoading(false);
+    };
 
-  const handleWishlistToggle = async () => {
-    if (loading || !card || !card.id) return;
+    checkWishlist();
+  }, [cardId]);
+
+  const handleToggleWishlist = async () => {
+    if (loading) return;
+
     setLoading(true);
+    const previousState = isInWishlist;
+    setIsInWishlist(!isInWishlist);
 
-    if (isInWishlist) {
-      await removeCardFromWishlist(card.id);
-    } else {
-      await addCardToWishlist(card);
+    const result = await toggleWishlistCard(cardId);
+    if (!result.success) {
+      setIsInWishlist(previousState);
+      console.error(
+        "❌ Erreur lors de la mise à jour de la wishlist :",
+        result.message
+      );
     }
 
-    await checkWishlistStatus();
-    setIsInWishlist(!isInWishlist);
     setLoading(false);
   };
 
   return (
     <TouchableOpacity
       style={styles.iconContainer}
-      onPress={handleWishlistToggle}
+      onPress={handleToggleWishlist}
       disabled={loading}
     >
       <Ionicons

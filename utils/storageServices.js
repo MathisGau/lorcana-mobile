@@ -1,116 +1,156 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const COLLECTION_KEY = "collection";
-const WISHLIST_KEY = "wishlist";
+const API_BASE_URL = "https://lorcana.brybry.fr/api";
 
-export const addCardToCollection = async (card) => {
+const fetchWithAuth = async (endpoint, method = "GET", body = null) => {
+  const token = await AsyncStorage.getItem("userToken");
+  if (!token) {
+    console.error("❌ No token available");
+    return null;
+  }
+
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+
+  const requestOptions = {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null,
+  };
+
   try {
-    const collection = await getCollection();
-    const updatedCollection = [...collection, card];
-    await AsyncStorage.setItem(
-      COLLECTION_KEY,
-      JSON.stringify(updatedCollection)
-    );
-    return updatedCollection;
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, requestOptions);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(`⚠️ Erreur API (${endpoint}):`, data);
+      return null;
+    }
+
+    return data;
   } catch (error) {
-    console.error("Erreur lors de l'ajout à la collection :", error);
+    console.error("❌ API Error:", error);
+    return null;
   }
 };
 
-export const removeCardFromCollection = async (cardId) => {
-  try {
-    const collection = await getCollection();
-    const updatedCollection = collection.filter((card) => card.id !== cardId);
-    await AsyncStorage.setItem(
-      COLLECTION_KEY,
-      JSON.stringify(updatedCollection)
-    );
-    return updatedCollection;
-  } catch (error) {
-    console.error("Erreur lors de la suppression de la carte :", error);
-  }
-};
-
-export const isCardInCollection = async (cardId) => {
-  try {
-    const collection = await getCollection();
-    return collection.some((card) => card.id === cardId);
-  } catch (error) {
-    console.error("Erreur lors de la vérification de la carte :", error);
-    return false;
-  }
-};
-
-export const getCollection = async () => {
-  try {
-    const storedCollection = await AsyncStorage.getItem(COLLECTION_KEY);
-    return storedCollection ? JSON.parse(storedCollection) : [];
-  } catch (error) {
-    console.error("Erreur lors de la récupération de la collection :", error);
-    return [];
-  }
-};
-
-export const addCardToWishlist = async (card) => {
-  try {
-    const wishlist = await getWishlist();
-    const updatedWishlist = [...wishlist, card];
-    await AsyncStorage.setItem(WISHLIST_KEY, JSON.stringify(updatedWishlist));
-    return updatedWishlist;
-  } catch (error) {
-    console.error("Erreur lors de l'ajout à la wishlist :", error);
-  }
-};
-
-export const removeCardFromWishlist = async (cardId) => {
-  try {
-    const wishlist = await getWishlist();
-    const updatedWishlist = wishlist.filter((card) => card.id !== cardId);
-    await AsyncStorage.setItem(WISHLIST_KEY, JSON.stringify(updatedWishlist));
-    return updatedWishlist;
-  } catch (error) {
-    console.error(
-      "Erreur lors de la suppression de la carte de la wishlist :",
-      error
-    );
-  }
+// Wishlist
+export const getWishlistCardIds = async () => {
+  const wishlist = await fetchWithAuth("wishlist");
+  if (!wishlist || !wishlist.data) return [];
+  return wishlist.data.map((card) => card.id) || [];
 };
 
 export const isCardInWishlist = async (cardId) => {
-  try {
-    const wishlist = await getWishlist();
-    return wishlist.some((card) => card.id === cardId);
-  } catch (error) {
-    console.error("Erreur lors de la vérification de la wishlist :", error);
-    return false;
-  }
+  const wishlist = await getWishlistCardIds();
+  return wishlist.includes(cardId);
 };
 
-export const getWishlist = async () => {
-  try {
-    const storedWishlist = await AsyncStorage.getItem(WISHLIST_KEY);
-    return storedWishlist ? JSON.parse(storedWishlist) : [];
-  } catch (error) {
-    console.error("Erreur lors de la récupération de la wishlist :", error);
-    return [];
+export const toggleWishlistCard = async (cardId) => {
+  if (typeof cardId !== "number") {
+    console.warn("❌ Erreur : cardId n'est pas un nombre valide.");
+    return { success: false, message: "ID de carte invalide." };
   }
+
+  const inWishlist = await isCardInWishlist(cardId);
+  console.log(
+    `🔄 Toggling wishlist status for card ${cardId}. Current: ${inWishlist}`
+  );
+
+  if (inWishlist) {
+    const response = await fetchWithAuth("wishlist/remove", "POST", {
+      card_id: cardId,
+    });
+    if (response) {
+      console.log(`✅ Carte ${cardId} retirée de la wishlist`);
+      return {
+        success: true,
+        message: "Carte retirée de la wishlist",
+        inWishlist: false,
+      };
+    }
+  } else {
+    const response = await fetchWithAuth("wishlist/add", "POST", {
+      card_id: cardId,
+    });
+    if (response) {
+      console.log(`✅ Carte ${cardId} ajoutée à la wishlist`);
+      return {
+        success: true,
+        message: "Carte ajoutée à la wishlist",
+        inWishlist: true,
+      };
+    }
+  }
+  return {
+    success: false,
+    message: "Erreur lors de la mise à jour de la wishlist",
+  };
 };
 
-export const resetCollection = async () => {
-  try {
-    await AsyncStorage.removeItem(COLLECTION_KEY);
-  } catch (error) {
-    console.error(
-      "Erreur lors de la réinitialisation de la collection :",
-      error
+// Collection
+export const getCollectionCardIds = async () => {
+  const collection = await fetchWithAuth("me/cards");
+  if (!collection || !collection.data) return [];
+  return collection.data.map((card) => card.id) || [];
+};
+
+export const isCardInCollection = async (cardId) => {
+  const collection = await getCollectionCardIds();
+  return collection.includes(cardId);
+};
+
+export const toggleCollectionCard = async (cardId) => {
+  if (typeof cardId !== "number") {
+    console.warn("❌ Erreur : cardId n'est pas un nombre valide.");
+    return { success: false, message: "ID de carte invalide." };
+  }
+
+  const inCollection = await isCardInCollection(cardId);
+  console.log(
+    `🔄 Toggling collection status for card ${cardId}. Current: ${inCollection}`
+  );
+
+  const response = await fetchWithAuth(`me/${cardId}/update-owned`, "POST", {
+    normal: inCollection ? 0 : 1,
+    foil: inCollection ? 0 : 1,
+  });
+
+  if (response && response.message === "Card updated successfully.") {
+    console.log(
+      `✅ Carte ${cardId} ${
+        inCollection ? "retirée de" : "ajoutée à"
+      } la collection`
     );
+    return {
+      success: true,
+      message: `Carte ${
+        inCollection ? "retirée de" : "ajoutée à"
+      } votre collection`,
+      inCollection: !inCollection,
+    };
   }
+
+  console.error("❌ Erreur lors de la mise à jour de la collection");
+  return {
+    success: false,
+    message: "Erreur lors de la mise à jour de la collection",
+  };
 };
 
-export const resetWishlist = async () => {
-  try {
-    await AsyncStorage.removeItem(WISHLIST_KEY);
-  } catch (error) {
-    console.error("Erreur lors de la réinitialisation de la wishlist :", error);
-  }
+// Fetch Card Details
+export const fetchCardDetails = async (cardId) => {
+  if (!cardId) return null;
+  return await fetchWithAuth(`cards/${cardId}`);
+};
+
+// Fetch Sets and Cards
+export const fetchSets = async () => await fetchWithAuth("sets");
+
+export const fetchCards = async (setId) => {
+  if (!setId) return [];
+  return await fetchWithAuth(`sets/${setId}/cards`);
 };

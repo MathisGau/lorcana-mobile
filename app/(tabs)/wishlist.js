@@ -5,12 +5,13 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  ImageBackground,
 } from "react-native";
 import { Image } from "expo-image";
 import {
-  collectionEvents,
-  getWishlist,
-  removeCardFromWishlist,
+  getWishlistCardIds,
+  fetchCardDetails,
+  toggleWishlistCard,
 } from "../../utils/storageServices";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,75 +25,84 @@ export default function Wishlist() {
   }, []);
 
   const loadWishlist = async () => {
-    const storedWishlist = await getWishlist();
-    if (storedWishlist) {
-      const validWishlist = storedWishlist.filter((card) => card && card.id);
-      setWishlist(validWishlist);
+    const storedCardIds = await getWishlistCardIds();
+    if (storedCardIds?.length > 0) {
+      const fetchedCards = await Promise.all(
+        storedCardIds.map(async (cardId) => {
+          const detailedCard = await fetchCardDetails(cardId);
+          return detailedCard?.data || null;
+        })
+      );
+      setWishlist(fetchedCards.filter((card) => card !== null));
     } else {
+      console.warn("⚠️ Aucune carte trouvée dans votre wishlist.");
       setWishlist([]);
     }
   };
 
   const handleRemoveCard = async (cardId) => {
-    await removeCardFromWishlist(cardId);
+    await toggleWishlistCard(cardId);
     loadWishlist();
   };
 
   return (
-    <View style={styles.container}>
-      {wishlist.length === 0 ? (
-        <Text style={styles.emptyText}>Aucune carte dans votre wishlist.</Text>
-      ) : (
-        <FlatList
-          data={wishlist}
-          numColumns={2}
-          keyExtractor={(card) => card.id.toString()}
-          renderItem={({ item }) =>
-            item ? (
-              <View style={styles.cardWrapper}>
-                <TouchableOpacity
-                  style={styles.cardContainer}
-                  onPress={() => router.push(`/cardDetail?id=${item.id}`)}
-                >
-                  <Image
-                    style={styles.cardImage}
-                    source={{ uri: item.image }}
-                  />
-                  <Text style={styles.cardName}>{item.name}</Text>
-                </TouchableOpacity>
-                {/* <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => handleRemoveCard(item.id)}
-                >
-                  <Ionicons name="trash" size={24} color="red" />
-                </TouchableOpacity> */}
-              </View>
-            ) : null
-          }
-        />
-      )}
-    </View>
+    <ImageBackground
+      source={require("../../assets/back.png")}
+      style={styles.background}
+      blurRadius={6}
+    >
+      <View style={styles.container}>
+        {wishlist.length === 0 ? (
+          <Text style={styles.emptyText}>
+            Aucune carte dans votre wishlist.
+          </Text>
+        ) : (
+          <FlatList
+            data={wishlist}
+            numColumns={2}
+            keyExtractor={(card) =>
+              card?.id ? card.id.toString() : Math.random().toString()
+            }
+            renderItem={({ item }) =>
+              item ? (
+                <View style={styles.cardWrapper}>
+                  <TouchableOpacity
+                    style={styles.cardContainer}
+                    onPress={() => router.push(`/cardDetail?id=${item.id}`)}
+                  >
+                    <Image
+                      style={styles.cardImage}
+                      source={{ uri: item.image }}
+                    />
+                    <Text style={styles.cardName}>{item.name}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => handleRemoveCard(item.id)}
+                  >
+                    <Ionicons name="trash" size={24} color="red" />
+                  </TouchableOpacity>
+                </View>
+              ) : null
+            }
+          />
+        )}
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   background: {
-    position: "absolute",
+    flex: 1,
     width: "100%",
     height: "100%",
-    opacity: 0.5,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFD700",
-    marginBottom: 20,
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 100,
   },
   emptyText: {
     color: "#DDD",
